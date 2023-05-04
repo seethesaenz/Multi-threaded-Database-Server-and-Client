@@ -81,10 +81,16 @@ int main(int argc, char *argv[]) {
         }
 
         // Send the request to the server
-        send(sfd, &message, sizeof(message), 0);
+        if(send(sfd, &message, sizeof(message), 0) == -1){
+            perror("send failed");
+            exit(EXIT_FAILURE);
+        }
 
         // Receive the response from the server
-        recv(sfd, &message, sizeof(message), 0);
+        if(recv(sfd, &message, sizeof(message), 0) == -1){
+            perror("recv failed");
+            exit(EXIT_FAILURE);
+        }
 
         // Print the response
         if (message.type == SUCCESS) {
