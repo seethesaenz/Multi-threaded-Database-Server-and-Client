@@ -10,8 +10,8 @@
 #define DB "database.db"
 
 int put(struct record *rd){
-    //append
-    FILE *db_file = fopen(DB, "ab");
+    //append mode
+    FILE *db_file = fopen(DB, "a");
     if (db_file == NULL){
         perror("Error opening database");
         return 0;
@@ -22,12 +22,12 @@ int put(struct record *rd){
 }
 
 int64_t get(uint32_t id, struct record *rd){
-    FILE *db_file = fopen(DB, "rb");
+    FILE *db_file = fopen(DB, "r");
     if (db_file == NULL){
         perror("Error opening database");
         return 0;
     }
-
+    //loops to record location if found
     while (fread(rd, sizeof(struct record), 1, db_file) > 0){
         if (rd->id == id){
             fclose(db_file);
@@ -42,11 +42,10 @@ int64_t get(uint32_t id, struct record *rd){
 void *client_handler(void *arg) {
     int client_socket = *(int *)arg;
     struct msg message;
-    printf("connected to a client\n");
 
     // Receive messages from the client
     while (read(client_socket, &message, sizeof(message)) > 0) {
-        // Process the client's request based on the message type
+        // switch case for put or get
         switch (message.type) {
             case PUT:
                 if (put(&message.rd)){
@@ -62,7 +61,7 @@ void *client_handler(void *arg) {
                 }
         }
 
-        // Send a response back to the client
+        // Send data to client
         if (write(client_socket, &message, sizeof(message)) == -1){
             perror("write failed");
             exit(EXIT_FAILURE);
@@ -82,7 +81,7 @@ int main(int argc, char *argv[]) {
     struct addrinfo hints;
     struct addrinfo *res;
     int status;
-
+    //arg checking
     if (argc != 2){
         fprintf(stderr, "usage: %s port\n", argv[0]);
         exit(EXIT_FAILURE);
@@ -110,22 +109,20 @@ int main(int argc, char *argv[]) {
     }
 
     freeaddrinfo(res);
-
+    //listennn
     if(listen(server_socket, 5) == -1){
         perror("listen");
         exit(EXIT_FAILURE);
     }
-    printf("listening\n");
 
     while (1) {
-        printf("listening\n");
         client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_len);
         if (client_socket == -1){
             perror("Failed to accept");
             continue;
         }
 
-        // Create a new thread to handle the client's requests
+        // child for each connection
         pthread_create(&thread_id, NULL, client_handler, (void *)&client_socket);
     }
 
