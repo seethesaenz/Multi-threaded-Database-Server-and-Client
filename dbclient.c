@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
     hints.ai_protocol = 0;
 
@@ -81,14 +81,14 @@ int main(int argc, char *argv[]) {
         }
 
         // Send the request to the server
-        if(send(sfd, &message, sizeof(message), 0) == -1){
-            perror("send failed");
+        if(write(sfd, &message, sizeof(message)) == -1){
+            perror("write failed");
             exit(EXIT_FAILURE);
         }
 
         // Receive the response from the server
-        if(recv(sfd, &message, sizeof(message), 0) == -1){
-            perror("recv failed");
+        if(read(sfd, &message, sizeof(message)) == -1){
+            perror("read failed");
             exit(EXIT_FAILURE);
         }
 
